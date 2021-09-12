@@ -1,33 +1,15 @@
 require("dotenv").config();
 const express = require("express");
-const Sequelize = require("sequelize");
+const db = require("./config/database");
+const User = require("./models/User");
 
-const conn_str = process.env.POSTGRES_CON_STR;
-const sequelize = new Sequelize(conn_str);
-
-sequelize
-  .authenticate()
+db.authenticate() // Performs: SELECT 1+1 AS result
   .then(() => {
     console.log("Connection has been established successfully.");
   })
   .catch((err) => {
     console.error("Unable to connect to the database:", err);
   });
-
-const User = sequelize.define("user", {
-  firstName: {
-    type: Sequelize.STRING,
-
-    allowNull: false,
-  },
-  lastName: {
-    type: Sequelize.STRING,
-  },
-});
-
-// Note: using `force: true` will drop the table if it already exists
-
-User.sync({ force: true });
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -38,9 +20,7 @@ app.get("/", (req, res) => res.json({ message: "Hello World" }));
 
 app.post("/user", async (req, res) => {
   try {
-    const newUser = new User(req.body);
-
-    await newUser.save();
+    const newUser = await User.create(req.body);
 
     res.json({ user: newUser }); // Returns the new user that is created in the database
   } catch (error) {
